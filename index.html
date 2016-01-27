@@ -6,6 +6,46 @@
     <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=0">
     <link rel="stylesheet" href="http://weui.github.io/weui/weui.css">
     <link rel="stylesheet" href="res/example.css">
+    <script src="http://res.wx.qq.com/open/js/jweixin-1.0.0.js"></script>
+    <script src="//cdn.bootcss.com/jquery/2.2.0/jquery.js"></script>
+    <script>
+        var timestamp,nonceStr,signature;
+        $(document).ready(function(){
+            $.ajax({
+                url: "http://conneting.com:8081/hh/admin/info/usr/0876c070-06e1-4eb3-8110-8d579ad353b5/weixin.jsp",
+                type: "GET",
+                success: function(req) {
+                    //请求成功时处理
+                    if(req !=null){
+                        var webjx = $.parseJSON(req);
+                        timestamp = webjx.timestamp;
+                        nonceStr = webjx.nonceStr;
+                        signature = webjx.signature;
+
+                        wx.config({
+                            debug: true,
+                            appId: 'wx952867c15315dcf1',
+                            timestamp: timestamp,
+                            nonceStr: nonceStr,
+                            signature: signature,
+                            jsApiList: [
+                                'checkJsApi',
+                                'getNetworkType',
+                                'openLocation',
+                                'getLocation',
+                                'chooseWXPay'
+                            ]
+                        });
+                    }
+                },
+                error: function() {
+                    alert("数据加载失败!");
+                }
+            });
+            });
+
+
+    </script>
 </head>
 <body ontouchstart="">
 <div class="page ">
