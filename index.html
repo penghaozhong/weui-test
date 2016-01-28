@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>微信uitest</title>
+    <title>微信UI</title>
     <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=0">
     <link rel="stylesheet" href="http://weui.github.io/weui/weui.css">
     <link rel="stylesheet" href="res/example.css">
@@ -11,6 +11,8 @@
     <script>
         var timestamp,nonceStr,signature;
         $(document).ready(function(){
+            $("#dialog_lolcation").hide();
+
             $.ajax({
                 url: "http://conneting.com:8081/hh/admin/info/usr/0876c070-06e1-4eb3-8110-8d579ad353b5/weixin.jsp",
                 type: "GET",
@@ -18,16 +20,12 @@
                     //请求成功时处理
                     if(req !=null){
                         var webjx = $.parseJSON(req);
-                        timestamp = webjx.timestamp;
-                        nonceStr = webjx.nonceStr;
-                        signature = webjx.signature;
-
                         wx.config({
-                            debug: true,
-                            appId: 'wx952867c15315dcf1',
-                            timestamp: timestamp,
-                            nonceStr: nonceStr,
-                            signature: signature,
+                            debug: false,
+                            appId: webjx.url,
+                            timestamp: webjx.timestamp,
+                            nonceStr: webjx.noncestr,
+                            signature: webjx.signature,
                             jsApiList: [
                                 'checkJsApi',
                                 'getNetworkType',
@@ -42,6 +40,63 @@
                     alert("数据加载失败!");
                 }
             });
+
+            $("#zhifu").click(function(){
+                $.ajax({
+                    url: "http://conneting.com:8081/hh/admin/info/usr/0876c070-06e1-4eb3-8110-8d579ad353b5/weixinzhifu.jsp",
+                    type: "GET",
+                    success: function(req) {
+                        //请求成功时处理
+                        if(req !=null){
+                            var webjx = $.parseJSON(req);
+                            wx.chooseWXPay({
+                                appId:webjx.url,
+                                timeStamp: webjx.timeStamp, // 支付签名时间戳，注意微信jssdk中的所有使用timestamp字段均为小写。但最新版的支付后台生成签名使用的timeStamp字段名需大写其中的S字符
+                                nonceStr: webjx.nonceStr, // 支付签名随机串，不长于 32 位
+                                package: webjx.package, // 统一支付接口返回的prepay_id参数值，提交格式如：prepay_id=***）
+                                signType: 'MD5', // 签名方式，默认为'SHA1'，使用新版支付需传入'MD5'
+                                paySign: webjx.paySign, // 支付签名
+                                success: function (res) {
+                                    if(res.err_msg == "get_brand_wcpay_request：ok" ) {
+                                        // 使用以上方式判断前端返回,微信团队郑重提示：res.err_msg将在用户支付成功后返回    ok，但并不保证它绝对可靠。
+                                        // 支付成功后的回调函数
+                                        $("#dialog_lolcation").show();
+                                        $("#localtioncon").text("支付成功!");
+                                    }
+
+
+                                }
+                            });
+                        }
+                    },
+                    error: function() {
+                        alert("数据加载失败!");
+                    }
+                });
+            });
+
+
+
+            $("#getLocation").click(function(){
+                $("#dialog_lolcation").show();
+                wx.getLocation({
+                    type: 'wgs84', // 默认为wgs84的gps坐标，如果要返回直接给openLocation用的火星坐标，可传入'gcj02'
+                    success: function (res) {
+                        var latitude = res.latitude; // 纬度，浮点数，范围为90 ~ -90
+                        var longitude = res.longitude; // 经度，浮点数，范围为180 ~ -180。
+                        var speed = res.speed; // 速度，以米/每秒计
+                        var accuracy = res.accuracy; // 位置精度
+
+                        $("#localtioncon").text("纬度:"+latitude +" 经度:"+longitude);
+                    }
+                });
+            });
+
+            $("#localtioncon_ok").click(function(){
+                $("#dialog_lolcation").hide();
+
+            });
+
             });
 
 
@@ -50,19 +105,33 @@
 <body ontouchstart="">
 <div class="page ">
     <div class="hd">
-        <h1 class="page_title">weUI-Test</h1>
+        <h1 class="page_title">weUI</h1>
         <p class="page_desc">这是个抢钱的时代</p>
     </div>
     <div class="page button" style="position:relative;">
     <div class="button_sp_area">
-        <a class="weui_btn weui_btn_primary" href="javascript:;">获取地址位置</a>
+        <a id="getLocation" class="weui_btn weui_btn_primary" href="javascript:;">获取地址位置</a>
         </div>
         <div class="button_sp_area">
-            <a class="weui_btn weui_btn_primary" href="javascript:;">支付接口</a>
+            <a id="zhifu" class="weui_btn weui_btn_primary" href="javascript:;">支付接口</a>
         </div>
 
     </div>
     </div>
+
+        <div class="weui_dialog_confirm" id="dialog_lolcation">
+            <div class="weui_mask"></div>
+            <div class="weui_dialog">
+                <div class="weui_dialog_hd"><strong class="weui_dialog_title">地理位置</strong></div>
+                <div class="weui_dialog_bd" id="localtioncon"></div>
+                <div class="weui_dialog_ft">
+                    <a href="#" class="weui_btn_dialog default">取消</a>
+                    <a href="#" id="localtioncon_ok" class="weui_btn_dialog primary">确定</a>
+                </div>
+            </div>
+        </div>
+
+
     </div>
 </body>
 </html>
