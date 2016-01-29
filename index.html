@@ -2,19 +2,28 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>微信UI</title>
+    <title>微信UI测试支付</title>
     <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=0">
     <link rel="stylesheet" href="http://weui.github.io/weui/weui.css">
     <link rel="stylesheet" href="res/example.css">
     <script src="http://res.wx.qq.com/open/js/jweixin-1.0.0.js"></script>
     <script src="//cdn.bootcss.com/jquery/2.2.0/jquery.js"></script>
     <script>
-        var timestamp,nonceStr,signature;
+        var timestamp,nonceStr,signature,wx_oepnid;
         $(document).ready(function(){
             $("#dialog_lolcation").hide();
+            $("#dialog_zhifu").hide();
+
+            var  search =window.location.search;
+            if(search !=""){
+                wx_oepnid = search.substr(1);
+            }
 
             $.ajax({
                 url: "http://conneting.com:8081/hh/admin/info/usr/0876c070-06e1-4eb3-8110-8d579ad353b5/weixin.jsp",
+                data:{
+                    wx_oepnid:wx_oepnid
+                },
                 type: "GET",
                 success: function(req) {
                     //请求成功时处理
@@ -42,39 +51,8 @@
             });
 
             $("#zhifu").click(function(){
-                $.ajax({
-                    url: "http://conneting.com:8081/hh/admin/info/usr/0876c070-06e1-4eb3-8110-8d579ad353b5/weixinzhifu.jsp",
-                    type: "GET",
-                    success: function(req) {
-                        //请求成功时处理
-                        if(req !=null){
-                            var webjx = $.parseJSON(req);
-                            wx.chooseWXPay({
-                                appId:webjx.url,
-                                timeStamp: webjx.timeStamp, // 支付签名时间戳，注意微信jssdk中的所有使用timestamp字段均为小写。但最新版的支付后台生成签名使用的timeStamp字段名需大写其中的S字符
-                                nonceStr: webjx.nonceStr, // 支付签名随机串，不长于 32 位
-                                package: webjx.package, // 统一支付接口返回的prepay_id参数值，提交格式如：prepay_id=***）
-                                signType: 'MD5', // 签名方式，默认为'SHA1'，使用新版支付需传入'MD5'
-                                paySign: webjx.paySign, // 支付签名
-                                success: function (res) {
-                                    if(res.err_msg == "get_brand_wcpay_request：ok" ) {
-                                        // 使用以上方式判断前端返回,微信团队郑重提示：res.err_msg将在用户支付成功后返回    ok，但并不保证它绝对可靠。
-                                        // 支付成功后的回调函数
-                                        $("#dialog_lolcation").show();
-                                        $("#localtioncon").text("支付成功!");
-                                    }
-
-
-                                }
-                            });
-                        }
-                    },
-                    error: function() {
-                        alert("数据加载失败!");
-                    }
-                });
+                $("#dialog_zhifu").show();
             });
-
 
 
             $("#getLocation").click(function(){
@@ -94,18 +72,60 @@
 
             $("#localtioncon_ok").click(function(){
                 $("#dialog_lolcation").hide();
+            });
+
+            $("#dialog_zhifu_quxiao").click(function(){
+                $("#dialog_zhifu").hide();
+                $("#zhifu_input").val('');
+            });
+
+            $("#dialog_zhifu_ok").click(function(){
+                $.ajax({
+                    url: "http://conneting.com:8081/hh/admin/info/usr/0876c070-06e1-4eb3-8110-8d579ad353b5/weixinzhifu.jsp",
+                    data:{
+                        total_fee:$("#zhifu_input").val(),
+                        wx_oepnid:wx_oepnid
+                    },
+                    type: "GET",
+                    success: function(req) {
+                        //请求成功时处理
+                        if(req !=null){
+                            var webjx = $.parseJSON(req);
+                            wx.chooseWXPay({
+                                appId:  webjx.appId,
+                                timestamp: webjx.timeStamp, // 支付签名时间戳，注意微信jssdk中的所有使用timestamp字段均为小写。但最新版的支付后台生成签名使用的timeStamp字段名需大写其中的S字符
+                                nonceStr: webjx.noncestr, // 支付签名随机串，不长于 32 位
+                                package: webjx.packageStr, // 统一支付接口返回的prepay_id参数值，提交格式如：prepay_id=***）
+                                signType: 'MD5', // 签名方式，默认为'SHA1'，使用新版支付需传入'MD5'
+                                paySign: webjx.paySign, // 支付签名
+                                success: function (res) {
+                                    if(res !=null ) {
+                                        // 使用以上方式判断前端返回,微信团队郑重提示：res.err_msg将在用户支付成功后返回    ok，但并不保证它绝对可靠。
+                                        // 支付成功后的回调函数
+                                        $("#dialog_zhifu").hide();
+                                        $("#zhifu_input").val('');
+                                    }else{
+                                        alert(res.err_msg);
+                                    }
+                                }
+                            });
+                        }
+                    },
+                    error: function() {
+                        alert("数据加载失败!");
+                    }
+                });
 
             });
 
             });
-
 
     </script>
 </head>
 <body ontouchstart="">
 <div class="page ">
     <div class="hd">
-        <h1 class="page_title">weUI</h1>
+        <h1 class="page_title">weUI测试支付</h1>
         <p class="page_desc">这是个抢钱的时代</p>
     </div>
     <div class="page button" style="position:relative;">
@@ -118,7 +138,6 @@
 
     </div>
     </div>
-
         <div class="weui_dialog_confirm" id="dialog_lolcation">
             <div class="weui_mask"></div>
             <div class="weui_dialog">
@@ -130,7 +149,19 @@
                 </div>
             </div>
         </div>
-
+        <div class="weui_dialog_confirm" id="dialog_zhifu">
+            <div class="weui_mask"></div>
+            <div class="weui_dialog">
+                <div class="weui_dialog_hd"><strong class="weui_dialog_title">请输入金额</strong></div>
+                <div >
+                    <input id="zhifu_input" style="width: 80%;height: 30px;" class="weui_dialog_bd weui_cell_primary"/>
+                </div>
+                <div class="weui_dialog_ft">
+                    <a href="#" class="weui_btn_dialog default" id="dialog_zhifu_quxiao">取消</a>
+                    <a href="#" id="dialog_zhifu_ok" class="weui_btn_dialog primary">确定</a>
+                </div>
+            </div>
+        </div>
 
     </div>
 </body>
